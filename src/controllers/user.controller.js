@@ -15,6 +15,8 @@ const registerUser = asyncHandler( async (req, res) => {
     //remove password and refresh token field from response
     //check for user creation 
     //return response
+
+
     
 // 1. ** get user details from frontend **
     //form/json se data aaraha to vo body se mil jaiyega, url se aaraha hai to uske liye alag technique hai
@@ -72,16 +74,20 @@ const registerUser = asyncHandler( async (req, res) => {
             username: username.toLowerCase()
         })
 
+
+// 7. **remove password and refresh token field from response**
         const createdUser = User.findById(user._id).select(
             "-password -refreshToken"
         )
 
-        if(createdUser){
+// 8.  **check for user creation**
+        if(!createdUser){
             throw new ApiError(500, "Something went wrong while registering user")
         }
 
+// 9.    **return response**
         return res.status(201).json(
-            new ApiResponse200, createdUser, "user Registered successfully"
+            new ApiResponse(200, createdUser, "user Registered successfully")
         )
 
 })
