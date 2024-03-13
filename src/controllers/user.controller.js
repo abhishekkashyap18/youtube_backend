@@ -20,9 +20,9 @@ const registerUser = asyncHandler( async (req, res) => {
     
 // 1. ** get user details from frontend **
     //form/json se data aaraha to vo body se mil jaiyega, url se aaraha hai to uske liye alag technique hai
+    
     const { fullName, email, username, password } = req.body
-    console.log("email:",email);
-
+    
 
 // 2. **validation**
     //hur field ko isi tarah multiple if laga k validate kar sakte hai, yehh to hai beginner friendly way
@@ -37,7 +37,7 @@ const registerUser = asyncHandler( async (req, res) => {
     }
 
 //3. **check if user already exists**
-    const existedUser = User.findOne({
+    const existedUser = await User.findOne({
         $or: [{username},{email}]
     })
     if(existedUser){
@@ -48,7 +48,17 @@ const registerUser = asyncHandler( async (req, res) => {
      //multer hume directly req.files ka access de deta hai,
      //jaise express hume req.body ka access de deta hai
      const avatarLocalPath = req.files?.avatar[0]?.path;
-     const coverImageLocalPath = req.files?.coverImage[0]?.path;
+    //  const coverImageLocalPath = req.files?.coverImage[0]?.path;     //cause error when coverImage is missing
+
+    //1st way of correcting the above error
+    //  const coverImageLocalPath = req.files?.coverImage?.coverImage[0]?.path;
+
+    //2nd way of correcting the above error
+    let coverImageLocalPath;
+    if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0) {
+        coverImageLocalPath = req.files.coverImage[0].path;
+    }
+
 
      if(!avatarLocalPath){
         throw new ApiError(400, "Avatar file is required");
@@ -76,7 +86,7 @@ const registerUser = asyncHandler( async (req, res) => {
 
 
 // 7. **remove password and refresh token field from response**
-        const createdUser = User.findById(user._id).select(
+        const createdUser = await User.findById(user._id).select(
             "-password -refreshToken"
         )
 
@@ -86,6 +96,8 @@ const registerUser = asyncHandler( async (req, res) => {
         }
 
 // 9.    **return response**
+        // const modifiedUser = {...createdUser};
+        // delete modifiedUser.circularProperty;
         return res.status(201).json(
             new ApiResponse(200, createdUser, "user Registered successfully")
         )
